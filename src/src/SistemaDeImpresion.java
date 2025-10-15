@@ -36,16 +36,13 @@ public class SistemaDeImpresion {
 					}
 					break;
 				case 3:
-					try{
-						logica.verDocumentos();
-					} catch(IllegalStateException e){
-						System.out.println(e.getMessage());
-					}
+					logica.verDocumentos();
 					break;
 				case 4:	
 					logica.cantidadDocumentos();
 					break;
 				case 5:
+					logica.salir();
 					System.out.println("\nFin del Programa\nProgramador: Ricardo, Alan, Yael");
 					break;
 				default: 
@@ -61,6 +58,8 @@ class Logica{
 	TdaColaCircular<Impresora> impresora = new TdaColaCircular<>(8);
 	Scanner leer = new Scanner(System.in);
 	Impresora documento;
+	Impresora documentoFin;
+	
 	public void enviarDocumento(){
 		LocalDateTime ahora = LocalDateTime.now();
 
@@ -79,7 +78,7 @@ class Logica{
 		int segundos = ahora.getSecond();
 
 		documento = new Impresora(id, usuario, nombre, numero, hora, minutos, segundos);
-
+		documentoFin = documento;
 		impresora.encolar(documento);
 	}
 
@@ -103,11 +102,39 @@ class Logica{
 	}
 
 	public void verDocumentos(){
-		//q pereza
+		System.out.println("Documentos en cola: " + impresora.toString());
 	}
 
 	public void cantidadDocumentos(){
 		System.out.println("Actualmente hay " + impresora.getTamano() + " documentos en cola");
 	}
+
+	public void salir(){
+		LocalDateTime ahora = LocalDateTime.now();
+		documento  = impresora.frenteCola();
+		
+		if(impresora.isVacia()){
+			throw new IllegalArgumentException("Ningun documento");
+		}else{
+			System.out.println("El documento con mas tiempo de espera fue: " + documento.getNombreArchivo());
+			int diferenciaHora = ahora.getHour() - documento.getHora();
+			int diferenciaMinutos = ahora.getMinute() - documento.getMinutos();
+			int diferenciaSegundos = ahora.getSecond() - documento.getSegundos();
+			diferenciaSegundos += diferenciaHora * 3600 + diferenciaMinutos * 60;
+			System.out.println("El documento tardo " + diferenciaSegundos + " segundos en ser impreso");			
+			
+			System.out.println("EL documento con menos tiempo en espera fue: " + documentoFin.getNombreArchivo());
+			int diferenciaHora2 = ahora.getHour() - documentoFin.getHora();
+			int diferenciaMinutos2 = ahora.getMinute() - documentoFin.getMinutos();
+			int diferenciaSegundos2 = ahora.getSecond() - documentoFin.getSegundos();
+			diferenciaSegundos2 += diferenciaHora * 3600 + diferenciaMinutos * 60;
+			System.out.println("El documento tardo " + diferenciaSegundos2 + " segundos en ser impreso");
+
+			System.out.println("El tiempo promedio es:" + (diferenciaSegundos + diferenciaSegundos2)/2);
+			
+		}
+		
+	}
+	
 
 }
