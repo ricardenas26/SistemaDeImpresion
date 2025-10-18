@@ -51,39 +51,19 @@ public class Impresora {
 	public int getSegundos() {
 		return fecha[2];
 	}
-	
-
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	public void setNombreUsuario(String nombreUsuario) {
-		this.nombreUsuario = nombreUsuario;
-	}
-
-	public void setNombreArchivo(String nombreArchivo) {
-		this.nombreArchivo = nombreArchivo;
-	}
-
-	public void setNumPaginas(int numPaginas) {
-		this.numPaginas = numPaginas;
-	}
-
-	public void setHora(int hora) {
-		this.fecha[0] = hora;
-	}
-
-	public void setMinutos(int minutos) {
-		this.fecha[1] = minutos;
-	}
-
-	public void setSegundos(int segundos) {
-		this.fecha[2] = segundos;
-	}
 
 	@Override
 	public String toString() {
-		return "Impresora{" + "id=" + id + ", nombreUsuario=" + nombreUsuario + ", nombreArchivo=" + nombreArchivo + ", numPaginas=" + numPaginas + ", fecha=" + fecha + '}';
+		return String.format(
+                "\n  ID: %s\n  Usuario: %s\n  Archivo: %s\n  Paginas: %d\n  Hora: %02d:%02d:%02d\n  -----------------------------------------",
+                getId(),
+                getNombreUsuario(),
+                getNombreArchivo(),
+                getNumPaginas(),
+                getHora(),
+                getMinutos(),
+                getSegundos()
+                );
 	}
 
 }

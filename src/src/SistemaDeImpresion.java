@@ -160,6 +160,10 @@ class SistemaDeImpresionFrame extends JFrame {
         JMenuItem menuAcercaDe = new JMenuItem("Acerca de...");
         menuAcercaDe.addActionListener(e -> mostrarAcercaDe());
         menuAcercaDe.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+
+	JMenuItem menuPeterAlert = new JMenuItem("Peter Alert");
+	menuPeterAlert.addActionListener(e -> mostrarPeterAlert());
+        menuPeterAlert.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         
         JMenuItem menuSalir = new JMenuItem("Salir");
         menuSalir.addActionListener(e -> salirPrograma());
@@ -167,10 +171,23 @@ class SistemaDeImpresionFrame extends JFrame {
         
         menuArchivo.add(menuAcercaDe);
         menuArchivo.addSeparator();
+	menuArchivo.add(menuPeterAlert);
+        menuArchivo.addSeparator();
         menuArchivo.add(menuSalir);
         
         menuBar.add(menuArchivo);
         setJMenuBar(menuBar);
+    }
+
+    private void mostrarPeterAlert(){
+	ImageIcon peter = new ImageIcon("src/icons/peter.png");
+	JLabel label = new JLabel(peter);
+	JOptionPane optionPane = new JOptionPane(label, JOptionPane.PLAIN_MESSAGE);
+	JDialog dialog = optionPane.createDialog(this, "Peter Alert");
+
+	 // Centrar exactamente sobre la ventana principal
+	dialog.setLocationRelativeTo(this);
+	dialog.setVisible(true);
     }
 
     private void mostrarAcercaDe() {
@@ -309,8 +326,7 @@ class SistemaDeImpresionFrame extends JFrame {
 
     private void imprimirDocumento() {
         try {
-            logica.imprimirDocumento();
-            String resultado = logica.getUltimoResultado();
+            String resultado = logica.imprimirDocumento();
             
             txtAreaResultado.setText("DOCUMENTO IMPRESO\n" +
                                    "==================\n" +
@@ -415,7 +431,7 @@ class Logica {
                          "Documentos en cola: " + impresora.getTamano();
     }
 
-    public void imprimirDocumento() {
+    public String imprimirDocumento() {
         LocalDateTime ahora = LocalDateTime.now();
 
         documento = impresora.desencolar();
@@ -431,6 +447,8 @@ class Logica {
                          "Nombre del archivo: " + documento.getNombreArchivo() + "\n" +
                          "Numero de paginas: " + documento.getNumPaginas() + "\n" +
                          "Tiempo de impresion: " + diferenciaSegundos + " segundos";
+	
+	return ultimoResultado;
     }
 
     public String verDocumentos() {
@@ -440,23 +458,12 @@ class Logica {
                    "No hay documentos en la cola de impresión\n" +
                    "-----------------------------------------";
         }
+
         
-        StringBuilder sb = new StringBuilder();
-        sb.append("DOCUMENTOS EN COLA DE IMPRESION\n");
-        sb.append("===============================\n");
-        sb.append("Total de documentos: ").append(impresora.getTamano()).append("\n\n");
-        
-        // Obtener información real de los documentos en cola
-        String[] documentosInfo = obtenerInfoDocumentosReales();
-        for (int i = 0; i < documentosInfo.length; i++) {
-            sb.append("DOCUMENTO ").append(i + 1).append(":\n");
-            sb.append(documentosInfo[i]).append("\n");
-            if (i < documentosInfo.length - 1) {
-                sb.append("-----------------------------------------\n");
-            }
-        }
-        
-        return sb.toString();
+        return "DOCUMENTOS EN COLA DE IMPRESION\n" +
+	       "===============================\n" +
+	       "Total de documentos: " + impresora.getTamano() + "\n" + 
+		impresora.toString();
     }
 
     public String cantidadDocumentos() {
@@ -465,11 +472,12 @@ class Logica {
 
     public void salir() {
         LocalDateTime ahora = LocalDateTime.now();
-        documento = impresora.frenteCola();
+        
         
         if(impresora.isVacia()){
             throw new IllegalArgumentException("No hay documentos en cola");
         } else {
+            documento = impresora.frenteCola();
             int diferenciaHora = ahora.getHour() - documento.getHora();
             int diferenciaMinutos = ahora.getMinute() - documento.getMinutos();
             int diferenciaSegundos = ahora.getSecond() - documento.getSegundos();
@@ -495,40 +503,5 @@ class Logica {
     public int getTamanoCola() {
         return impresora.getTamano();
     }
-
-    // Método auxiliar para obtener información de documentos de la cola
-    private String[] obtenerInfoDocumentosReales() {
-        if (impresora.isVacia()) {
-            return new String[0];
-        }
-        int tamano = impresora.getTamano();
-        String[] documentos = new String[tamano]; 
-        if (documentoFin != null) {
-            // Mostrar información del documento más reciente
-            documentos[0] = String.format(
-                "  ID: %s\n  Usuario: %s\n  Archivo: %s\n  Paginas: %d\n  Hora: %02d:%02d:%02d",
-                documentoFin.getId(),
-                documentoFin.getNombreUsuario(),
-                documentoFin.getNombreArchivo(),
-                documentoFin.getNumPaginas(),
-                documentoFin.getHora(),
-                documentoFin.getMinutos(),
-                documentoFin.getSegundos()
-            );
-            for (int i = 1; i < tamano; i++) {
-                documentos[i] = String.format(
-                    "  ID: %s-%d\n  Usuario: %s-%d\n  Archivo: %s-%d\n  Paginas: %d\n  Hora: %02d:%02d:%02d",
-                    documentoFin.getId(), i,
-                    documentoFin.getNombreUsuario(), i,
-                    documentoFin.getNombreArchivo(), i,
-                    documentoFin.getNumPaginas() + i,
-                    (documentoFin.getHora() + i) % 24,
-                    (documentoFin.getMinutos() + i * 5) % 60,
-                    (documentoFin.getSegundos() + i * 10) % 60
-                );
-            }
-        }
-        
-        return documentos;
-    }
+    
 }
