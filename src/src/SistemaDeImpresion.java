@@ -6,7 +6,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.LocalDateTime;
-
+	
 public class SistemaDeImpresion{
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -16,17 +16,50 @@ public class SistemaDeImpresion{
 }
 
 class SistemaDeImpresionFrame extends JFrame {
-    private Logica logica;
     private JTextField txtId, txtUsuario, txtNombreArchivo, txtPaginas;
     private JTextArea txtAreaResultado;
     private JLabel lblEstado;
     private JButton btnEnviar, btnImprimir, btnVerDocumentos, btnCantidad, btnSalir;
+	
+	//logica
+	TdaColaCircular<Impresora> impresora = new TdaColaCircular<>(8);
+    Impresora documento;
+    Impresora documentoFin;
+    private String ultimoResultado = "";
+    private String idTemp, usuarioTemp, nombreTemp;
+    private int paginasTemp;
 
     public SistemaDeImpresionFrame() {
-        logica = new Logica();
         inicializarComponentes();
         configurarVentana();
         crearMenu();
+    }
+
+	//metodo que crea botones
+    private JButton crearBoton(String texto, Color color) {
+        JButton boton = new JButton(texto);
+        boton.setBackground(color);
+        boton.setForeground(Color.WHITE);
+        boton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        boton.setFocusPainted(false);
+        boton.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(color.darker(), 1),
+            BorderFactory.createEmptyBorder(12, 5, 12, 5)
+        ));
+        
+        // Agregar hover effects(aca de que cambia el color bien aca bien aca :v)
+        boton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                boton.setBackground(color.brighter());
+                boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                boton.setBackground(color);
+                boton.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+            }
+        });
+        
+        return boton;
     }
 
     private void inicializarComponentes() {
@@ -86,7 +119,7 @@ class SistemaDeImpresionFrame extends JFrame {
         panelIzquierdo.add(panelBotones, BorderLayout.NORTH);
         
         // Panel de formulario
-        JPanel panelFormulario = crearPanelFormulario();
+        JPanel panelFormulario = crearPanelBotones();
         panelIzquierdo.add(panelFormulario, BorderLayout.CENTER);
         
         // Panel derecho - Solo resultados
@@ -97,8 +130,8 @@ class SistemaDeImpresionFrame extends JFrame {
         // Área de texto para resultados
         JPanel panelResultado = new JPanel(new BorderLayout());
         panelResultado.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(new Color(100, 100, 100), 1),
-            "Resultados del Sistema"
+			BorderFactory.createLineBorder(new Color(100, 100, 100), 1),
+			"Resultados del Sistema"
         ));
         panelResultado.setBackground(new Color(250, 250, 250));
         
@@ -122,32 +155,7 @@ class SistemaDeImpresionFrame extends JFrame {
         add(splitPane, BorderLayout.CENTER);
     }
 
-    private JButton crearBoton(String texto, Color color) {
-        JButton boton = new JButton(texto);
-        boton.setBackground(color);
-        boton.setForeground(Color.WHITE);
-        boton.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        boton.setFocusPainted(false);
-        boton.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(color.darker(), 1),
-            BorderFactory.createEmptyBorder(12, 5, 12, 5)
-        ));
-        
-        // Agregar hover effects(aca de que cambia el color bien aca bien aca :v)
-        boton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                boton.setBackground(color.brighter());
-                boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                boton.setBackground(color);
-                boton.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-            }
-        });
-        
-        return boton;
-    }
-
+    //==================== MENU ====================
     private void crearMenu() {
         JMenuBar menuBar = new JMenuBar();
         menuBar.setBackground(new Color(70, 130, 180));
@@ -161,8 +169,8 @@ class SistemaDeImpresionFrame extends JFrame {
         menuAcercaDe.addActionListener(e -> mostrarAcercaDe());
         menuAcercaDe.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
-	JMenuItem menuPeterAlert = new JMenuItem("Peter Alert");
-	menuPeterAlert.addActionListener(e -> mostrarPeterAlert());
+		JMenuItem menuPeterAlert = new JMenuItem("Peter Alert");
+		menuPeterAlert.addActionListener(e -> mostrarPeterAlert());
         menuPeterAlert.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         
         JMenuItem menuSalir = new JMenuItem("Salir");
@@ -171,7 +179,7 @@ class SistemaDeImpresionFrame extends JFrame {
         
         menuArchivo.add(menuAcercaDe);
         menuArchivo.addSeparator();
-	menuArchivo.add(menuPeterAlert);
+		menuArchivo.add(menuPeterAlert);
         menuArchivo.addSeparator();
         menuArchivo.add(menuSalir);
         
@@ -203,13 +211,10 @@ class SistemaDeImpresionFrame extends JFrame {
             "Acerca del Sistema",
             JOptionPane.INFORMATION_MESSAGE);
     }
+	//==================== FIN MENU ====================
 
-    private JPanel crearPanelFormulario() {
+    private JPanel crearPanelBotones() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(new Color(100, 100, 100), 1),
-            "Formulario de Documento"
-        ));
         panel.setBackground(new Color(248, 249, 250));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
@@ -227,42 +232,12 @@ class SistemaDeImpresionFrame extends JFrame {
         lblNombre.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblPaginas.setFont(new Font("Segoe UI", Font.BOLD, 12));
         
-        txtId = crearTextField();
-        txtUsuario = crearTextField();
-        txtNombreArchivo = crearTextField();
-        txtPaginas = crearTextField();
-        
         // Configurar acción para los botones
         btnEnviar.addActionListener(e -> enviarDocumento());
         btnImprimir.addActionListener(e -> imprimirDocumento());
         btnVerDocumentos.addActionListener(e -> verDocumentos());
         btnCantidad.addActionListener(e -> cantidadDocumentos());
         btnSalir.addActionListener(e -> salirPrograma());
-        
-        // Agregar componentes al panel
-        gbc.gridx = 0; gbc.gridy = 0;
-        panel.add(lblId, gbc);
-        
-        gbc.gridx = 1; gbc.gridy = 0;
-        panel.add(txtId, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 1;
-        panel.add(lblUsuario, gbc);
-        
-        gbc.gridx = 1; gbc.gridy = 1;
-        panel.add(txtUsuario, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 2;
-        panel.add(lblNombre, gbc);
-        
-        gbc.gridx = 1; gbc.gridy = 2;
-        panel.add(txtNombreArchivo, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 3;
-        panel.add(lblPaginas, gbc);
-        
-        gbc.gridx = 1; gbc.gridy = 3;
-        panel.add(txtPaginas, gbc);
         
         return panel;
     }
@@ -286,81 +261,126 @@ class SistemaDeImpresionFrame extends JFrame {
     }
 
     private void enviarDocumento() {
-        try {
-            if (txtId.getText().isEmpty() || txtUsuario.getText().isEmpty() || 
-                txtNombreArchivo.getText().isEmpty() || txtPaginas.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, 
-                    "Por favor, complete todos los campos del formulario", 
-                    "Campos Incompletos", 
-                    JOptionPane.WARNING_MESSAGE);
-                return;
+		try {
+		    LocalDateTime ahora = LocalDateTime.now();
+
+			int hora = ahora.getHour();
+			int minutos = ahora.getMinute();
+			int segundos = ahora.getSecond();
+			
+            JPanel panel = new JPanel();
+            panel.setLayout(new java.awt.GridLayout(4, 2, 5, 5));
+
+            javax.swing.JTextField campoId = new javax.swing.JTextField(10);
+            javax.swing.JTextField campoUsuario = new javax.swing.JTextField(10);
+            javax.swing.JTextField campoArchivo = new javax.swing.JTextField(10);
+			javax.swing.JTextField campoPaginas = new javax.swing.JTextField(10);
+
+            panel.add(new JLabel("ID:"));
+            panel.add(campoId);
+            panel.add(new JLabel("Nombre de usuario:"));
+            panel.add(campoUsuario);
+            panel.add(new JLabel("Nombre del archivo:"));
+            panel.add(campoArchivo);
+            panel.add(new JLabel("Numero de paginas:"));
+            panel.add(campoPaginas);
+
+            int resultado = JOptionPane.showConfirmDialog(this, panel, "Agregar Motor",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+            if (resultado == JOptionPane.OK_OPTION) {
+                String id = campoId.getText().trim();
+                String usuario = campoUsuario.getText().trim();
+                String archivo = campoArchivo.getText().trim();
+				int paginas;
+				try {
+					paginas = Integer.parseInt(campoPaginas.getText().trim());
+				} catch (NumberFormatException ex) {
+					JOptionPane.showMessageDialog(this, "El número de páginas debe ser un número entero válido.", "Error", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+
+                if (id.isEmpty() || usuario.isEmpty() || archivo.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios", "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                documento = new Impresora(id, usuario, archivo, paginas, hora, minutos, segundos);
+				documentoFin = documento;
+                impresora.encolar(documento);
+				
+				ultimoResultado = "ID: " + documento.getId() + "\n" +
+                         "Usuario: " + documento.getNombreUsuario() + "\n" +
+                         "Archivo: " + documento.getNombreArchivo() + "\n" +
+                         "Paginas: " + documento.getNumPaginas() + "\n" +
+                         "Hora de envio: " + String.format("%02d:%02d:%02d", hora, minutos, segundos) + "\n" +
+                         "Documentos en cola: " + impresora.getTamano();
+
             }
-            
-            int paginas;
-            try {
-                paginas = Integer.parseInt(txtPaginas.getText());
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, 
-                    "El número de páginas debe ser un valor numérico", 
-                    "Error de Formato", 
-                    JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
-            logica.setDatosTemporales(txtId.getText(), txtUsuario.getText(), 
-                                    txtNombreArchivo.getText(), paginas);
-            logica.enviarDocumento();
-            
-            String resultado = logica.getUltimoResultado();
-            txtAreaResultado.setText("DOCUMENTO ENVIADO EXITOSAMENTE\n" +
-                                   "================================\n" +
-                                   resultado);
-            
-            lblEstado.setText("Estado: Documento enviado - " + logica.getTamanoCola() + " en cola");
-            limpiarCamposFormulario();
-            
-        } catch (IllegalStateException ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+
+        } catch (IllegalStateException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
         }
     }
 
     private void imprimirDocumento() {
-        try {
-            String resultado = logica.imprimirDocumento();
+		try{
+			LocalDateTime ahora = LocalDateTime.now();
+
+			documento = impresora.desencolar();
+        
+			int diferenciaHora = ahora.getHour() - documento.getHora();
+			int diferenciaMinutos = ahora.getMinute() - documento.getMinutos();
+			int diferenciaSegundos = ahora.getSecond() - documento.getSegundos();
+			diferenciaSegundos += diferenciaHora * 3600 + diferenciaMinutos * 60;
+
+			ultimoResultado = "Datos del documento impreso:\n" +
+                         "ID: " + documento.getId() + "\n" +
+                         "Nombre del usuario: " + documento.getNombreUsuario() + "\n" +
+                         "Nombre del archivo: " + documento.getNombreArchivo() + "\n" +
+                         "Numero de paginas: " + documento.getNumPaginas() + "\n" +
+                         "Tiempo de impresion: " + diferenciaSegundos + " segundos";
+			
+			txtAreaResultado.setText("DOCUMENTO IMPRESO\n" +
+                                    "==================" +
+                                    documento);
             
-            txtAreaResultado.setText("DOCUMENTO IMPRESO\n" +
-                                   "==================\n" +
-                                   resultado);
-            
-            lblEstado.setText("Estado: Documento impreso - " + logica.getTamanoCola() + " en cola");
-            
-        } catch (IllegalStateException e) {
-            JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
+            lblEstado.setText("Estado: Documento impreso - " + impresora.getTamano() + " en cola");
+		}catch (IllegalStateException e){
+			JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		}
     }
 
     private void verDocumentos() {
-        String documentos = logica.verDocumentos();
+		String documentos;
+		
+		if (impresora.isVacia()) {
+            documentos = "DOCUMENTOS EN COLA DE IMPRESION\n" +
+                    "===============================\n" +
+                    "No hay documentos en la cola de impresión\n" +
+                    "-----------------------------------------";
+        } else{
+			documentos = "DOCUMENTOS EN COLA DE IMPRESION\n" +
+					"===============================\n" +
+					"Total de documentos: " + impresora.getTamano() + "\n" + 
+					impresora.toString();
+		}
+		
         txtAreaResultado.setText(documentos);
-        lblEstado.setText("Estado: Mostrando documentos - " + logica.getTamanoCola() + " en cola");
+        lblEstado.setText("Estado: Mostrando documentos - " + impresora.getTamano() + " en cola");
     }
 
     private void cantidadDocumentos() {
-        String cantidad = logica.cantidadDocumentos();
+		String cantidad = "Actualmente hay " + impresora.getTamano() + " documentos en cola";
+		
         txtAreaResultado.setText("CANTIDAD DE DOCUMENTOS\n" +
                                "======================\n" +
                                cantidad + "\n" +
                                "Capacidad maxima: 8 documentos\n" +
-                               "Espacio disponible: " + (8 - logica.getTamanoCola()) + " documentos");
-        lblEstado.setText("Estado: Mostrando cantidad - " + logica.getTamanoCola() + " en cola");
-    }
-
-    private void limpiarCamposFormulario() {
-        txtId.setText("");
-        txtUsuario.setText("");
-        txtNombreArchivo.setText("");
-        txtPaginas.setText("");
-    }
+                               "Espacio disponible: " + (8 - impresora.getTamano()) + " documentos");
+        lblEstado.setText("Estado: Mostrando cantidad - " + impresora.getTamano() + " en cola");
+    } 
 
     private void salirPrograma() {
         int confirmacion = JOptionPane.showConfirmDialog(this, 
@@ -371,137 +391,45 @@ class SistemaDeImpresionFrame extends JFrame {
             JOptionPane.QUESTION_MESSAGE);
         
         if (confirmacion == JOptionPane.YES_OPTION) {
-            try {
-                logica.salir();
-                String resultadoFinal = logica.getUltimoResultado();
+            if(impresora.isVacia()){
+				JOptionPane.showMessageDialog(this, 
+                "La cola esta vacia" + "\n\nDesarrollado por: Ricardo, Alan, Yael", 
+                "Fin del Programa", 
+                JOptionPane.INFORMATION_MESSAGE);
+				
+			} else{
+				LocalDateTime ahora = LocalDateTime.now();
+				documento = impresora.frenteCola();
+				
+				int diferenciaHora = ahora.getHour() - documento.getHora();
+				int diferenciaMinutos = ahora.getMinute() - documento.getMinutos();
+				int diferenciaSegundos = ahora.getSecond() - documento.getSegundos();
+				diferenciaSegundos += diferenciaHora * 3600 + diferenciaMinutos * 60;
+            
+				int diferenciaHora2 = ahora.getHour() - documentoFin.getHora();
+				int diferenciaMinutos2 = ahora.getMinute() - documentoFin.getMinutos();
+			    int diferenciaSegundos2 = ahora.getSecond() - documentoFin.getSegundos();
+				diferenciaSegundos2 += diferenciaHora2 * 3600 + diferenciaMinutos2 * 60;
+
+				ultimoResultado = "Documento con mas tiempo: " + documento.getNombreArchivo() + "\n" +
+                             "Tiempo: " + diferenciaSegundos + " segundos\n" +
+                             "Documento con menos tiempo: " + documentoFin.getNombreArchivo() + "\n" +
+                             "Tiempo: " + diferenciaSegundos2 + " segundos\n" +
+                             "Tiempo promedio: " + (diferenciaSegundos + diferenciaSegundos2)/2 + " segundos";
                 
                 JOptionPane.showMessageDialog(this, 
                     "PROGRAMA FINALIZADO\n" +
                     "===================\n" +
-                    resultadoFinal + "\n\n" +
+                    ultimoResultado + "\n\n" +
                     "Desarrollado por:\n" +
                     "• Ricardo\n" +
                     "• Alan\n" +
                     "• Yael", 
                     "Fin del Programa", 
                     JOptionPane.INFORMATION_MESSAGE);
-                    
-            } catch (IllegalArgumentException ex) {
-                JOptionPane.showMessageDialog(this, 
-                    ex.getMessage() + "\n\nDesarrollado por: Ricardo, Alan, Yael", 
-                    "Fin del Programa", 
-                    JOptionPane.INFORMATION_MESSAGE);
-            }
+			}
+			
             System.exit(0);
         }
     }
-}
-// Clase Logica con visual
-class Logica {
-    TdaColaCircular<Impresora> impresora = new TdaColaCircular<>(8);
-    Impresora documento;
-    Impresora documentoFin;
-    private String ultimoResultado = "";
-    private String idTemp, usuarioTemp, nombreTemp;
-    private int paginasTemp;
-
-    public void setDatosTemporales(String id, String usuario, String nombre, int paginas) {
-        this.idTemp = id;
-        this.usuarioTemp = usuario;
-        this.nombreTemp = nombre;
-        this.paginasTemp = paginas;
-    }
-
-    public void enviarDocumento() {
-        LocalDateTime ahora = LocalDateTime.now();
-
-        int hora = ahora.getHour();
-        int minutos = ahora.getMinute();
-        int segundos = ahora.getSecond();
-
-        documento = new Impresora(idTemp, usuarioTemp, nombreTemp, paginasTemp, hora, minutos, segundos);
-        documentoFin = documento;
-        impresora.encolar(documento);
-        
-        ultimoResultado = "ID: " + documento.getId() + "\n" +
-                         "Usuario: " + documento.getNombreUsuario() + "\n" +
-                         "Archivo: " + documento.getNombreArchivo() + "\n" +
-                         "Paginas: " + documento.getNumPaginas() + "\n" +
-                         "Hora de envio: " + String.format("%02d:%02d:%02d", hora, minutos, segundos) + "\n" +
-                         "Documentos en cola: " + impresora.getTamano();
-    }
-
-    public String imprimirDocumento() {
-        LocalDateTime ahora = LocalDateTime.now();
-
-        documento = impresora.desencolar();
-        
-        int diferenciaHora = ahora.getHour() - documento.getHora();
-        int diferenciaMinutos = ahora.getMinute() - documento.getMinutos();
-        int diferenciaSegundos = ahora.getSecond() - documento.getSegundos();
-        diferenciaSegundos += diferenciaHora * 3600 + diferenciaMinutos * 60;
-
-        ultimoResultado = "Datos del documento impreso:\n" +
-                         "ID: " + documento.getId() + "\n" +
-                         "Nombre del usuario: " + documento.getNombreUsuario() + "\n" +
-                         "Nombre del archivo: " + documento.getNombreArchivo() + "\n" +
-                         "Numero de paginas: " + documento.getNumPaginas() + "\n" +
-                         "Tiempo de impresion: " + diferenciaSegundos + " segundos";
-	
-	return ultimoResultado;
-    }
-
-    public String verDocumentos() {
-        if (impresora.isVacia()) {
-            return "DOCUMENTOS EN COLA DE IMPRESION\n" +
-                   "===============================\n" +
-                   "No hay documentos en la cola de impresión\n" +
-                   "-----------------------------------------";
-        }
-
-        
-        return "DOCUMENTOS EN COLA DE IMPRESION\n" +
-	       "===============================\n" +
-	       "Total de documentos: " + impresora.getTamano() + "\n" + 
-		impresora.toString();
-    }
-
-    public String cantidadDocumentos() {
-        return "Actualmente hay " + impresora.getTamano() + " documentos en cola";
-    }
-
-    public void salir() {
-        LocalDateTime ahora = LocalDateTime.now();
-        
-        
-        if(impresora.isVacia()){
-            throw new IllegalArgumentException("No hay documentos en cola");
-        } else {
-            documento = impresora.frenteCola();
-            int diferenciaHora = ahora.getHour() - documento.getHora();
-            int diferenciaMinutos = ahora.getMinute() - documento.getMinutos();
-            int diferenciaSegundos = ahora.getSecond() - documento.getSegundos();
-            diferenciaSegundos += diferenciaHora * 3600 + diferenciaMinutos * 60;
-            
-            int diferenciaHora2 = ahora.getHour() - documentoFin.getHora();
-            int diferenciaMinutos2 = ahora.getMinute() - documentoFin.getMinutos();
-            int diferenciaSegundos2 = ahora.getSecond() - documentoFin.getSegundos();
-            diferenciaSegundos2 += diferenciaHora2 * 3600 + diferenciaMinutos2 * 60;
-
-            ultimoResultado = "Documento con mas tiempo: " + documento.getNombreArchivo() + "\n" +
-                             "Tiempo: " + diferenciaSegundos + " segundos\n" +
-                             "Documento con menos tiempo: " + documentoFin.getNombreArchivo() + "\n" +
-                             "Tiempo: " + diferenciaSegundos2 + " segundos\n" +
-                             "Tiempo promedio: " + (diferenciaSegundos + diferenciaSegundos2)/2 + " segundos";
-        }
-    }
-
-    public String getUltimoResultado() {
-        return ultimoResultado;
-    }
-
-    public int getTamanoCola() {
-        return impresora.getTamano();
-    }
-    
 }
