@@ -55,7 +55,7 @@ public class Impresora {
 	@Override
 	public String toString() {
 		return String.format(
-                "\n  ID: %s\n  Usuario: %s\n  Archivo: %s\n  Paginas: %d\n  Hora: %02d:%02d:%02d\n  -----------------------------------------",
+                "\nID: %s\nUsuario: %s\nArchivo: %s\nPaginas: %d\nHora: %02d:%02d:%02d\n-----------------------------------------",
                 getId(),
                 getNombreUsuario(),
                 getNombreArchivo(),

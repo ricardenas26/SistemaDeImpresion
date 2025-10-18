@@ -1,12 +1,33 @@
 package src;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.time.LocalDateTime;
+
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JTextArea;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
 	
+//==================== MAIN ====================
 public class SistemaDeImpresion{
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -16,35 +37,33 @@ public class SistemaDeImpresion{
 }
 
 class SistemaDeImpresionFrame extends JFrame {
-    private JTextField txtId, txtUsuario, txtNombreArchivo, txtPaginas;
     private JTextArea txtAreaResultado;
     private JLabel lblEstado;
     private JButton btnEnviar, btnImprimir, btnVerDocumentos, btnCantidad, btnSalir;
 	
-	//logica
-	TdaColaCircular<Impresora> impresora = new TdaColaCircular<>(8);
+    //logica
+    TdaColaCircular<Impresora> impresora = new TdaColaCircular<>(8);
     Impresora documento;
     Impresora documentoFin;
-    private String ultimoResultado = "";
-    private String idTemp, usuarioTemp, nombreTemp;
-    private int paginasTemp;
+    private String documentoInfo = "";
 
-    public SistemaDeImpresionFrame() {
+    
+	public SistemaDeImpresionFrame() {
         inicializarComponentes();
         configurarVentana();
         crearMenu();
     }
 
-	//metodo que crea botones
+    //==================== METODO CREAR BOTON ====================
     private JButton crearBoton(String texto, Color color) {
         JButton boton = new JButton(texto);
         boton.setBackground(color);
         boton.setForeground(Color.WHITE);
-        boton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        boton.setFont(new Font("Segoe UI", Font.BOLD, 20));
         boton.setFocusPainted(false);
         boton.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(color.darker(), 1),
-            BorderFactory.createEmptyBorder(12, 5, 12, 5)
+            BorderFactory.createEmptyBorder(18, 8, 18, 8)
         ));
         
         // Agregar hover effects(aca de que cambia el color bien aca bien aca :v)
@@ -58,10 +77,13 @@ class SistemaDeImpresionFrame extends JFrame {
                 boton.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             }
         });
+		
+		
         
         return boton;
     }
-
+	
+	//==================== FIN METODO CREAR BOTON ====================
     private void inicializarComponentes() {
         setLayout(new BorderLayout(10, 10));
         
@@ -90,14 +112,14 @@ class SistemaDeImpresionFrame extends JFrame {
         splitPane.setDividerLocation(400);
         splitPane.setDividerSize(3);
         splitPane.setBackground(new Color(200, 200, 200));
-        
+//////        
         // Panel izquierdo - Controles y formulario
         JPanel panelIzquierdo = new JPanel(new BorderLayout());
         panelIzquierdo.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         panelIzquierdo.setBackground(new Color(240, 240, 240));
         
         // Panel de botones principales
-        JPanel panelBotones = new JPanel(new GridLayout(5, 1, 8, 8));
+        JPanel panelBotones = new JPanel(new GridLayout(5, 1, 8, 47));
         panelBotones.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(new Color(100, 100, 100), 1),
             "Opciones del Sistema"
@@ -211,7 +233,7 @@ class SistemaDeImpresionFrame extends JFrame {
             "Acerca del Sistema",
             JOptionPane.INFORMATION_MESSAGE);
     }
-	//==================== FIN MENU ====================
+    //==================== FIN MENU ====================
 
     private JPanel crearPanelBotones() {
         JPanel panel = new JPanel(new GridBagLayout());
@@ -242,17 +264,6 @@ class SistemaDeImpresionFrame extends JFrame {
         return panel;
     }
 
-    private JTextField crearTextField() {
-        JTextField textField = new JTextField(20);
-        textField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        textField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(150, 150, 150), 1),
-            BorderFactory.createEmptyBorder(8, 8, 8, 8)
-        ));
-        textField.setBackground(Color.WHITE);
-        return textField;
-    }
-
     private void configurarVentana() {
         setTitle("Sistema de Impresión - Desarrollado por: Ricardo, Alan, Yael");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -260,6 +271,7 @@ class SistemaDeImpresionFrame extends JFrame {
         setLocationRelativeTo(null);
     }
 
+	//==================== LOGICA ====================
     private void enviarDocumento() {
 		try {
 		    LocalDateTime ahora = LocalDateTime.now();
@@ -310,15 +322,17 @@ class SistemaDeImpresionFrame extends JFrame {
 				documentoFin = documento;
                 impresora.encolar(documento);
 				
-				ultimoResultado = "ID: " + documento.getId() + "\n" +
+				documentoInfo = "ID: " + documento.getId() + "\n" +
                          "Usuario: " + documento.getNombreUsuario() + "\n" +
                          "Archivo: " + documento.getNombreArchivo() + "\n" +
                          "Paginas: " + documento.getNumPaginas() + "\n" +
-                         "Hora de envio: " + String.format("%02d:%02d:%02d", hora, minutos, segundos) + "\n" +
-                         "Documentos en cola: " + impresora.getTamano();
-
+                         "Hora de envio: " + String.format("%02d:%02d:%02d", hora, minutos, segundos) + "\n";
+				
+				txtAreaResultado.setText("DOCUMENTO ENVIADO CON EXITO\n" +
+										"==================\n" +
+										"Datos del documento enviado: \n" + 
+										documentoInfo);
             }
-
         } catch (IllegalStateException e) {
             JOptionPane.showMessageDialog(this, e.getMessage());
         }
@@ -335,7 +349,7 @@ class SistemaDeImpresionFrame extends JFrame {
 			int diferenciaSegundos = ahora.getSecond() - documento.getSegundos();
 			diferenciaSegundos += diferenciaHora * 3600 + diferenciaMinutos * 60;
 
-			ultimoResultado = "Datos del documento impreso:\n" +
+			documentoInfo = "Datos del documento impreso:\n" +
                          "ID: " + documento.getId() + "\n" +
                          "Nombre del usuario: " + documento.getNombreUsuario() + "\n" +
                          "Nombre del archivo: " + documento.getNombreArchivo() + "\n" +
@@ -343,8 +357,8 @@ class SistemaDeImpresionFrame extends JFrame {
                          "Tiempo de impresion: " + diferenciaSegundos + " segundos";
 			
 			txtAreaResultado.setText("DOCUMENTO IMPRESO\n" +
-                                    "==================" +
-                                    documento);
+                                    "==================\n" +
+                                    documentoInfo);
             
             lblEstado.setText("Estado: Documento impreso - " + impresora.getTamano() + " en cola");
 		}catch (IllegalStateException e){
@@ -392,10 +406,16 @@ class SistemaDeImpresionFrame extends JFrame {
         
         if (confirmacion == JOptionPane.YES_OPTION) {
             if(impresora.isVacia()){
-				JOptionPane.showMessageDialog(this, 
-                "La cola esta vacia" + "\n\nDesarrollado por: Ricardo, Alan, Yael", 
-                "Fin del Programa", 
-                JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(this,
+					"PROGRAMA FINALIZADO\n" +
+                    "===================\n" +
+                    "La cola esta vacia" + "\n\n" +
+                    "Desarrollado por:\n" +
+                    "• Ricardo\n" +
+                    "• Alan\n" +
+                    "• Yael", 
+                    "Fin del Programa", 
+                    JOptionPane.INFORMATION_MESSAGE);
 				
 			} else{
 				LocalDateTime ahora = LocalDateTime.now();
@@ -408,19 +428,19 @@ class SistemaDeImpresionFrame extends JFrame {
             
 				int diferenciaHora2 = ahora.getHour() - documentoFin.getHora();
 				int diferenciaMinutos2 = ahora.getMinute() - documentoFin.getMinutos();
-			    int diferenciaSegundos2 = ahora.getSecond() - documentoFin.getSegundos();
+			        int diferenciaSegundos2 = ahora.getSecond() - documentoFin.getSegundos();
 				diferenciaSegundos2 += diferenciaHora2 * 3600 + diferenciaMinutos2 * 60;
 
-				ultimoResultado = "Documento con mas tiempo: " + documento.getNombreArchivo() + "\n" +
-                             "Tiempo: " + diferenciaSegundos + " segundos\n" +
-                             "Documento con menos tiempo: " + documentoFin.getNombreArchivo() + "\n" +
-                             "Tiempo: " + diferenciaSegundos2 + " segundos\n" +
-                             "Tiempo promedio: " + (diferenciaSegundos + diferenciaSegundos2)/2 + " segundos";
+				documentoInfo = "Documento con mas tiempo: " + documento.getNombreArchivo() + "\n" +
+                                "Tiempo: " + diferenciaSegundos + " segundos\n" +
+                                "Documento con menos tiempo: " + documentoFin.getNombreArchivo() + "\n" +
+                                "Tiempo: " + diferenciaSegundos2 + " segundos\n" +
+                                "Tiempo promedio: " + (diferenciaSegundos + diferenciaSegundos2)/2 + " segundos";
                 
                 JOptionPane.showMessageDialog(this, 
                     "PROGRAMA FINALIZADO\n" +
                     "===================\n" +
-                    ultimoResultado + "\n\n" +
+                    documentoInfo + "\n\n" +
                     "Desarrollado por:\n" +
                     "• Ricardo\n" +
                     "• Alan\n" +
@@ -432,4 +452,5 @@ class SistemaDeImpresionFrame extends JFrame {
             System.exit(0);
         }
     }
+	//==================== FIN LOGICA ====================
 }
