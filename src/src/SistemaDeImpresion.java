@@ -46,9 +46,11 @@ class SistemaDeImpresionFrame extends JFrame {
     Impresora documento;
     Impresora documentoFin;
     private String documentoInfo = "";
-
     
-	public SistemaDeImpresionFrame() {
+    private long tiempoMaximoEspera = 0;
+    private long tiempoMinimoEspera = Long.MAX_VALUE;
+    
+    public SistemaDeImpresionFrame() {
         inicializarComponentes();
         configurarVentana();
         crearMenu();
@@ -77,8 +79,6 @@ class SistemaDeImpresionFrame extends JFrame {
                 boton.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             }
         });
-		
-		
         
         return boton;
     }
@@ -322,7 +322,7 @@ class SistemaDeImpresionFrame extends JFrame {
 				documentoFin = documento;
                 impresora.encolar(documento);
 				
-				documentoInfo = "ID: " + documento.getId() + "\n" +
+                    documentoInfo = "ID: " + documento.getId() + "\n" +
                          "Usuario: " + documento.getNombreUsuario() + "\n" +
                          "Archivo: " + documento.getNombreArchivo() + "\n" +
                          "Paginas: " + documento.getNumPaginas() + "\n" +
@@ -339,62 +339,95 @@ class SistemaDeImpresionFrame extends JFrame {
     }
 
     private void imprimirDocumento() {
-		try{
-			LocalDateTime ahora = LocalDateTime.now();
+        try{
+            LocalDateTime ahora = LocalDateTime.now();
 
-			documento = impresora.desencolar();
+            documento = impresora.desencolar();
         
-			int diferenciaHora = ahora.getHour() - documento.getHora();
-			int diferenciaMinutos = ahora.getMinute() - documento.getMinutos();
-			int diferenciaSegundos = ahora.getSecond() - documento.getSegundos();
-			diferenciaSegundos += diferenciaHora * 3600 + diferenciaMinutos * 60;
+            int diferenciaHora = ahora.getHour() - documento.getHora();
+            int diferenciaMinutos = ahora.getMinute() - documento.getMinutos();
+            int diferenciaSegundos = ahora.getSecond() - documento.getSegundos();
+            diferenciaSegundos += diferenciaHora * 3600 + diferenciaMinutos * 60;
 
-			documentoInfo = "Datos del documento impreso:\n" +
-                         "ID: " + documento.getId() + "\n" +
-                         "Nombre del usuario: " + documento.getNombreUsuario() + "\n" +
-                         "Nombre del archivo: " + documento.getNombreArchivo() + "\n" +
-                         "Numero de paginas: " + documento.getNumPaginas() + "\n" +
-                         "Tiempo de impresion: " + diferenciaSegundos + " segundos";
-			
-			txtAreaResultado.setText("DOCUMENTO IMPRESO\n" +
-                                    "==================\n" +
-                                    documentoInfo);
+            long tiempoActual = (long) diferenciaSegundos;
+            if (tiempoActual > tiempoMaximoEspera) {
+                tiempoMaximoEspera = tiempoActual;
+            }
+            if (tiempoActual < tiempoMinimoEspera) {
+                tiempoMinimoEspera = tiempoActual;
+            }
+
+            documentoInfo = "Datos del documento impreso:\n" +
+                            "ID: " + documento.getId() + "\n" +
+                            "Nombre del usuario: " + documento.getNombreUsuario() + "\n" +
+                            "Nombre del archivo: " + documento.getNombreArchivo() + "\n" +
+                            "Numero de paginas: " + documento.getNumPaginas() + "\n" +
+                            "Tiempo de impresion: " + diferenciaSegundos + " segundos";
+            
+            txtAreaResultado.setText("DOCUMENTO IMPRESO\n" +
+                                     "==================\n" +
+                                     documentoInfo);
             
             lblEstado.setText("Estado: Documento impreso - " + impresora.getTamano() + " en cola");
-		}catch (IllegalStateException e){
-			JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-		}
+            
+            JOptionPane.showMessageDialog(this, 
+                                          documentoInfo, 
+                                          "Documento Impreso Exitosamente", 
+                                          JOptionPane.INFORMATION_MESSAGE);
+
+        }catch (IllegalStateException e){
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void verDocumentos() {
-		String documentos;
-		
-		if (impresora.isVacia()) {
+        String documentos;
+        
+        if (impresora.isVacia()) {
             documentos = "DOCUMENTOS EN COLA DE IMPRESION\n" +
-                    "===============================\n" +
-                    "No hay documentos en la cola de impresión\n" +
-                    "-----------------------------------------";
+                         "===============================\n" +
+                         "No hay documentos en la cola de impresión\n" +
+                         "-----------------------------------------";
         } else{
-			documentos = "DOCUMENTOS EN COLA DE IMPRESION\n" +
-					"===============================\n" +
-					"Total de documentos: " + impresora.getTamano() + "\n" + 
-					impresora.toString();
-		}
-		
+            documentos = "DOCUMENTOS EN COLA DE IMPRESION\n" +
+                         "===============================\n" +
+                         "Total de documentos: " + impresora.getTamano() + "\n" + 
+                         impresora.toString();
+        }
+        
         txtAreaResultado.setText(documentos);
         lblEstado.setText("Estado: Mostrando documentos - " + impresora.getTamano() + " en cola");
+        
+        JTextArea areaDialogo = new JTextArea(15, 50); 
+        areaDialogo.setText(documentos);
+        areaDialogo.setEditable(false);
+        areaDialogo.setFont(new Font("Consolas", Font.PLAIN, 13));
+        
+        JScrollPane scrollDialogo = new JScrollPane(areaDialogo);
+        
+        JOptionPane.showMessageDialog(this, 
+                                      scrollDialogo, 
+                                      "Vista de Documentos en Cola", 
+                                      JOptionPane.PLAIN_MESSAGE);
     }
 
     private void cantidadDocumentos() {
-		String cantidad = "Actualmente hay " + impresora.getTamano() + " documentos en cola";
-		
+        
+        String infoCantidad = "Actualmente hay " + impresora.getTamano() + " documentos en cola\n" +
+                              "Capacidad maxima: 8 documentos\n" +
+                              "Espacio disponible: " + (8 - impresora.getTamano()) + " documentos";
+        
         txtAreaResultado.setText("CANTIDAD DE DOCUMENTOS\n" +
-                               "======================\n" +
-                               cantidad + "\n" +
-                               "Capacidad maxima: 8 documentos\n" +
-                               "Espacio disponible: " + (8 - impresora.getTamano()) + " documentos");
+                                 "======================\n" +
+                                 infoCantidad); 
+                                 
         lblEstado.setText("Estado: Mostrando cantidad - " + impresora.getTamano() + " en cola");
-    } 
+        
+        JOptionPane.showMessageDialog(this, 
+                                      infoCantidad, 
+                                      "Cantidad de Documentos", 
+                                      JOptionPane.INFORMATION_MESSAGE);
+    }
 
     private void salirPrograma() {
         int confirmacion = JOptionPane.showConfirmDialog(this, 
@@ -405,50 +438,33 @@ class SistemaDeImpresionFrame extends JFrame {
             JOptionPane.QUESTION_MESSAGE);
         
         if (confirmacion == JOptionPane.YES_OPTION) {
-            if(impresora.isVacia()){
-				JOptionPane.showMessageDialog(this,
-					"PROGRAMA FINALIZADO\n" +
-                    "===================\n" +
-                    "La cola esta vacia" + "\n\n" +
-                    "Desarrollado por:\n" +
-                    "• Ricardo\n" +
-                    "• Alan\n" +
-                    "• Yael", 
-                    "Fin del Programa", 
-                    JOptionPane.INFORMATION_MESSAGE);
-				
-			} else{
-				LocalDateTime ahora = LocalDateTime.now();
-				documento = impresora.frenteCola();
-				
-				int diferenciaHora = ahora.getHour() - documento.getHora();
-				int diferenciaMinutos = ahora.getMinute() - documento.getMinutos();
-				int diferenciaSegundos = ahora.getSecond() - documento.getSegundos();
-				diferenciaSegundos += diferenciaHora * 3600 + diferenciaMinutos * 60;
             
-				int diferenciaHora2 = ahora.getHour() - documentoFin.getHora();
-				int diferenciaMinutos2 = ahora.getMinute() - documentoFin.getMinutos();
-			        int diferenciaSegundos2 = ahora.getSecond() - documentoFin.getSegundos();
-				diferenciaSegundos2 += diferenciaHora2 * 3600 + diferenciaMinutos2 * 60;
-
-				documentoInfo = "Documento con mas tiempo: " + documento.getNombreArchivo() + "\n" +
-                                "Tiempo: " + diferenciaSegundos + " segundos\n" +
-                                "Documento con menos tiempo: " + documentoFin.getNombreArchivo() + "\n" +
-                                "Tiempo: " + diferenciaSegundos2 + " segundos\n" +
-                                "Tiempo promedio: " + (diferenciaSegundos + diferenciaSegundos2)/2 + " segundos";
+            String estadisticasInfo;
+            
+            if (tiempoMinimoEspera == Long.MAX_VALUE) { 
+                estadisticasInfo = "No se imprimieron documentos en esta sesión.";
+            } else {
                 
-                JOptionPane.showMessageDialog(this, 
-                    "PROGRAMA FINALIZADO\n" +
-                    "===================\n" +
-                    documentoInfo + "\n\n" +
-                    "Desarrollado por:\n" +
-                    "• Ricardo\n" +
-                    "• Alan\n" +
-                    "• Yael", 
-                    "Fin del Programa", 
-                    JOptionPane.INFORMATION_MESSAGE);
-			}
-			
+                double tiempoPromedio = (double) (tiempoMaximoEspera + tiempoMinimoEspera) / 2.0;
+                
+                estadisticasInfo = "Estadísticas de Documentos Impresos:\n" +
+                                   "====================================\n" +
+                                   "Tiempo MÁXIMO de espera: " + tiempoMaximoEspera + " segundos\n" +
+                                   "Tiempo MÍNIMO de espera: " + tiempoMinimoEspera + " segundos\n" +
+                                   String.format("Tiempo PROMEDIO (max/min): %.2f segundos", tiempoPromedio);
+            }
+            
+            JOptionPane.showMessageDialog(this, 
+                "PROGRAMA FINALIZADO\n" +
+                "===================\n" +
+                estadisticasInfo + "\n\n" +
+                "Desarrollado por:\n" +
+                "• Ricardo\n" +
+                "• Alan\n" +
+                "• Yael", 
+                "Fin del Programa", 
+                JOptionPane.INFORMATION_MESSAGE);
+            
             System.exit(0);
         }
     }
